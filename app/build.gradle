@@ -7,6 +7,10 @@ android {
     namespace 'cn.quibbler.pickview'
     compileSdk 33
 
+    buildFeatures {
+        viewBinding true
+    }
+
     defaultConfig {
         applicationId "cn.quibbler.pickview"
         minSdk 24
@@ -33,6 +37,8 @@ android {
 }
 
 dependencies {
+
+    implementation project(':PickView')
 
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.4.1'
