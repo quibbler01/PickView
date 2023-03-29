@@ -3,6 +3,7 @@ package cn.quibbler.pickview
 import android.content.Context
 import android.graphics.Paint
 import android.os.Handler
+import android.os.Looper
 import android.os.Message
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -63,7 +64,7 @@ class LoopView : View {
     private var mCircularRadius = 0
     private var mWidgetWidth = 0
 
-    public val mHandler = Handler(object : Handler.Callback {
+    public val mHandler = Handler(Looper.getMainLooper(), object : Handler.Callback {
         override fun handleMessage(msg: Message): Boolean {
             when (msg.what) {
                 MSG_INVALIDATE -> {
@@ -91,6 +92,10 @@ class LoopView : View {
 
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
         initView(context, attrs)
+    }
+
+    private fun initView(context: Context?, attrs: AttributeSet?) {
+
     }
 
 }
