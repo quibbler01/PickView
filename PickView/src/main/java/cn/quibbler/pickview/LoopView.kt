@@ -2,11 +2,13 @@ package cn.quibbler.pickview
 
 import android.content.Context
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.util.AttributeSet
 import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import cn.quibbler.pickview.util.sp2px
 import java.util.concurrent.Executors
@@ -37,7 +39,7 @@ class LoopView : View {
     private val mCenterTextPaint: Paint = Paint() // paint that draw center text
     private val mCenterLinePaint: Paint = Paint() // paint that draw line besides center text
 
-    private var mDataList: Array<*>? = null
+    private var mDataList: List<String> = ArrayList()
 
     private var mTextSize = 0
     private var mMaxTextWidth = 0
@@ -114,6 +116,78 @@ class LoopView : View {
 
         mGestureDetector = GestureDetector(context, mOnGestureListener)
         mGestureDetector?.setIsLongpressEnabled(false)
+    }
+
+    private fun initData() {
+        mTopBottomTextPaint.color = mTopBottomTextColor;
+        mTopBottomTextPaint.isAntiAlias = true;
+        mTopBottomTextPaint.typeface = Typeface.MONOSPACE;
+        mTopBottomTextPaint.textSize = mTextSize.toFloat();
+
+        mCenterTextPaint.color = mCenterTextColor;
+        mCenterTextPaint.isAntiAlias = true;
+        mCenterTextPaint.textScaleX = 1.05F;
+        mCenterTextPaint.typeface = Typeface.MONOSPACE;
+        mCenterTextPaint.textSize = mTextSize.toFloat();
+
+        mCenterLinePaint.color = mCenterLineColor;
+        mCenterLinePaint.isAntiAlias = true;
+        mCenterLinePaint.typeface = Typeface.MONOSPACE;
+        mCenterLinePaint.textSize = mTextSize.toFloat();
+
+        measureTextWidthHeight()
+
+        //计算半圆周 -- mMaxTextHeight * lineSpacingMultiplier 表示每个item的高度  mDrawItemsCount = 7
+        //实际显示5个,留两个是在圆周的上下面
+        //lineSpacingMultiplier是指text上下的距离的值和maxTextHeight一样的意思 所以 = 2
+        //mDrawItemsCount - 1 代表圆周的上下两面各被剪切了一半 相当于高度少了一个 mMaxTextHeight
+        val mHalfCircumference = (mMaxTextHeight * lineSpacingMultiplier * (mDrawItemsCount - 1).toInt())
+        //the diameter of circular 2πr = cir, 2r = height
+        mCircularDiameter = ((mHalfCircumference * 2) / Math.PI).toInt()
+        //the radius of circular
+        mCircularRadius = (mHalfCircumference / Math.PI).toInt()
+
+        if (mInitPosition == -1) {
+            if (mCanLoop) {
+                mInitPosition = (mDataList.size + 1) / 2;
+            } else {
+                mInitPosition = 0;
+            }
+        }
+        mCurrentIndex = mInitPosition;
+        invalidate()
+    }
+
+    inner class LoopViewGestureListener : GestureDetector.SimpleOnGestureListener() {
+
+        override fun onDown(e: MotionEvent): Boolean {
+            cancelSchedule()
+            return true
+        }
+
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+            mTotalScrollY = (mTotalScrollY + distanceY).toInt()
+            if (!mCanLoop) {
+                val initPositionCircleLength = (mInitPosition * mItemHeight).toInt()
+                val initPositionStartY = -1 * initPositionCircleLength
+                if (mTotalScrollY < initPositionStartY) {
+                    mTotalScrollY = initPositionStartY;
+                }
+
+                val circleLength = ((mDataList.size - 1 - mInitPosition).toFloat() * mItemHeight).toInt()
+                if (mTotalScrollY >= circleLength) {
+                    mTotalScrollY = circleLength;
+                }
+            }
+
+            invalidate()
+            return true
+        }
+
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+            startSmoothScrollTo(velocityY)
+            return true
+        }
     }
 
 }
