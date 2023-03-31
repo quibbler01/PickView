@@ -8,6 +8,7 @@ import android.os.Message
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.View
+import cn.quibbler.pickview.util.sp2px
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 
@@ -29,12 +30,12 @@ class LoopView : View {
     private var mLoopListener: LoopScrollListener? = null
     private var mGestureDetector: GestureDetector? = null
     private var mSelectedItem = 0
-    private var mOnGestureListener: GestureDetector.SimpleOnGestureListener? = null
+    private val mOnGestureListener: GestureDetector.SimpleOnGestureListener = LoopViewGestureListener()
     private var mContext: Context? = null
 
-    private var mTopBottomTextPaint: Paint? = null //paint that draw top and bottom text
-    private var mCenterTextPaint: Paint? = null // paint that draw center text
-    private var mCenterLinePaint: Paint? = null // paint that draw line besides center text
+    private val mTopBottomTextPaint: Paint = Paint() //paint that draw top and bottom text
+    private val mCenterTextPaint: Paint = Paint() // paint that draw center text
+    private val mCenterLinePaint: Paint = Paint() // paint that draw line besides center text
 
     private var mDataList: Array<*>? = null
 
@@ -95,7 +96,24 @@ class LoopView : View {
     }
 
     private fun initView(context: Context?, attrs: AttributeSet?) {
+        val array = context?.obtainStyledAttributes(attrs, R.styleable.LoopView)
+        array?.let {
+            mTopBottomTextColor = it.getColor(R.styleable.LoopView_topBottomTextColor, 0xffafafaf.toInt());
+            mCenterTextColor = it.getColor(R.styleable.LoopView_centerTextColor, 0xff313131.toInt());
+            mCenterLineColor = it.getColor(R.styleable.LoopView_lineColor, 0xffc5c5c5.toInt());
+            mCanLoop = it.getBoolean(R.styleable.LoopView_canLoop, true);
+            mInitPosition = it.getInt(R.styleable.LoopView_initPosition, -1);
+            mTextSize = it.getDimensionPixelSize(R.styleable.LoopView_textSize, sp2px(context, 16f));
+            mDrawItemsCount = it.getInt(R.styleable.LoopView_drawItemCount, 7);
+        }
+        array?.recycle()
 
+        lineSpacingMultiplier = 2f
+
+        setLayerType(LAYER_TYPE_SOFTWARE, null)
+
+        mGestureDetector = GestureDetector(context, mOnGestureListener)
+        mGestureDetector?.setIsLongpressEnabled(false)
     }
 
 }
